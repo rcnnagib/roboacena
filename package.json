@@ -1,0 +1,27 @@
+{
+  "name": "sefaz",
+  "version": "1.0.0",
+  "description": "simulador sefaz",
+  "main": "sefaz.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "express": "^4.14.0",
+    "express-xml-bodyparser": "^0.3.0",
+    "jsonwebtoken": "^8.2.1",
+    "macro": "0.0.2",
+    "mongodb": "^2.2.33",
+    "node-gzip": "^1.1.2",
+    "node-rsa": "^1.0.5",
+    "node-zip": "^1.1.1",
+    "nodejs-base64": "^1.0.3",
+    "sha1": "^1.1.1",
+    "smtp-server": "^3.5.0",
+    "soap": "^0.27.1",
+    "xml2js": "^0.4.19"
+  }
+}
