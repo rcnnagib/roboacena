@@ -21,7 +21,7 @@ async function registerTestCase(req, res){
 	result = await db.collection('testcases').replaceOne({testcase:testcase, service: req.service}, req, {upsert:true})
 	
 	if(result.upsertedId){
-		console.log('Registrado caso de teste: \n' + req.request)
+		console.log('Registrado caso de teste: \n' + base64decode(req.request) )
 		res.end( "Caso de teste Registrado com sucesso") 	
 	}else if(result.modifiedCount){
 		console.log('caso de teste atualizado \n:' + testcase )
@@ -68,7 +68,7 @@ async function procTestCase(req, res){
 		}else if(rule && rule.response && rule.response.replaces){
 			response = await xmlFunctions.replaceXML(response, rule.response.replaces)
 		}
-		console.log('returning testcase response\n' + req.body)
+		console.log('returning testcase response\n' + response)
 		res.end(response)
 	}
 }

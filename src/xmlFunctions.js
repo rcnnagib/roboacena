@@ -136,6 +136,11 @@ function validTagRegex(xml, replaces){
     var tag
     var attribute
     
+    if(!replaces){
+        return faultString 
+    }
+    
+    
     for(nReplaces = 0; nReplaces < replaces.length; nReplaces++){
         regex = new RegExp(replaces[nReplaces].value, 'g')
         if(replaces[nReplaces].tag){
