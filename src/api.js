@@ -41,23 +41,23 @@ var cluster = require('cluster');
 	});
 */
 	//VALIDACAO E PROCESSAMENTO DE CASOS DE TESTES
-	app.post(/automacao-async/,bodyParser.text({type:'*/*'}),function (req, res) {
+	app.post(/proc-request/,bodyParser.text({type:'*/*',limit: '10mb', extended: true}),function (req, res) {
 		console.log("recebendo requisicao:\n servico:" + req.headers.service + "\nmodelo: " + req.headers.model)	
 		testcase.procTestCase(req, res)
 	})
 
 	//INCLUSAO DOS CASOS DE TESTES
-	app.post('/automacao/testcases/',bodyParser.json() ,function(req, res, next){		
+	app.post('/automacao/testcases/',bodyParser.json({limit: '10mb', extended: true}) ,function(req, res, next){		
 		testcase.registerTestCase(req.body, res)
 	})
 
 	//CADASTRO DE REGRAS DE SCAPES E REPLACES
-	app.post('/automacao/templates/rules/',bodyParser.json() ,function(req, res, next){		
+	app.post('/automacao/templates/rules/',bodyParser.json({limit: '10mb', extended: true}) ,function(req, res, next){		
 		rules.createRules(req.body.model, req.body.rule, req.body, res)			
 	})
 
 	//CADASTRO DE REGRAS DE SCAPES E REPLACES
-	app.get('/automacao/templates/rules/',bodyParser.json() ,function(req, res, next){		
+	app.get('/automacao/templates/rules/',bodyParser.json({limit: '10mb', extended: true}) ,function(req, res, next){		
 		rules.createRules(req.body.model, req.body.rule, req.body, res)			
 	})
 

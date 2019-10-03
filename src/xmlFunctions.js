@@ -5,47 +5,39 @@ function formatXML(request){
     request = request.replace(/&gt;/g,'>')
     request = request.replace(/&quot;/g,'"')
     request = request.replace(/(\s*<)/g, '<')
+    request = request.replace(/\n/g, '')
     return request
 }
 
 //APLICA REPLACES EM UM XML
-async function replaceXML(xml, replaces, xmlRetRequest){
-    var functions = require('/roboacena/src/functions.js')
-    var tag
-    var attribute
-    var newValue
-    var type
+async function replaceXML(xml, replaces, xmlRequest){
+    var functions = require('/roboacena/src/functions.js')    
+    var newValue    
 
-    for(replaceIndex = 0; replaceIndex <  replaces.length; replaceIndex++){
-        if(replaces[replaceIndex].tag){
-            tag = replaces[replaceIndex].tag
-        }else{
-            attribute = replaces[replaceIndex].attribute
-        }
-
-        if(replaces[replaceIndex].type){
-            type = replaces[replaceIndex].type
-        }        
-        size = replaces[replaceIndex].size
-        
-        if(replaces[replaceIndex].value){                        
-            newValue = replaces[replaceIndex].value
-        }else if(replaces[replaceIndex].from === 'retRequest') {                        
-            newValue = getNodeXml(xmlRetRequest, tag, type )
-            newValue = getTagvalue(newValue, tag)
+    for(replaceIndex = 0; replaceIndex <  replaces.length; replaceIndex++){                        
+        if(replaces[replaceIndex].value){
+            if(replaces[replaceIndex].type !== "complex"){
+                newValue = replaces[replaceIndex].value    
+            }else{
+                newValue = getComplexRegex(xml, replaces[replaceIndex].tag)
+            }                            
+        }else if(replaces[replaceIndex].from === 'request'){
+            newValue = getNodeXml(xml, replaces[replaceIndex].tag, replaces[replaceIndex].type )[0]
+            newValue = getTagvalue(newValue, replaces[replaceIndex].tag)
+        }else if(replaces[replaceIndex].from === 'retRequest'){
+            newValue = getNodeXml(xmlRequest, replaces[replaceIndex].tag, replaces[replaceIndex].type )[0]            
+            newValue = getTagvalue(newValue, replaces[replaceIndex].tag)            
         }else if(replaces[replaceIndex].from ==='getDateTime'){            
             newValue = functions.getDateTime()
         }else if(replaces[replaceIndex].from ==='getRandomNumber'){
-            newValue =  functions.getRandomNumber("1".repeat(size), "9".repeat(size))
-        }                
-        
-        if(tag && newValue){
-            xml = setNodeXml(xml, tag, newValue, type )
-            tag = undefined
+            newValue =  functions.getRandomNumber("1".repeat(replaces[replaceIndex].size), "9".repeat(replaces[replaceIndex].size))
+        }                        
+        if(replaces[replaceIndex].tag && newValue){
+            xml = setNodeXml(xml, replaces[replaceIndex].tag, newValue, replaces[replaceIndex].type )
         }
-        if(attribute && newValue){
-            xml = setAttributeValue(xml, attribute, newValue )
-            attribute = undefined
+        if(replaces[replaceIndex].attribute && newValue){
+            xml = setAttributeValue(xml, replaces[replaceIndex].attribute, newValue )
+            newValue = null
         }
     }
     return xml
@@ -66,7 +58,7 @@ function setNodeXml(xml, tag, newValue, type ){
     if(!tagFin){
         return xml
     }
-    node = getNodeXml(xml, tag, type)
+    node = getNodeXml(xml, tag, type)[0]
     if(!node){
         return xml
     }
@@ -74,25 +66,41 @@ function setNodeXml(xml, tag, newValue, type ){
     return xml.replace(node, newTag )
 }
 
-//RETORNA UM NO DE UM XML
 function getNodeXml(xml, tag, type){
     var node
     var regex
+    var string = ''
+    //xml ="<retEnviCte versao='3.00' xmlns='http://www.portalfiscal.inf.br/cte'>"
+    regexRootTag  = new RegExp('<(\\w*:)?' + tag + '((\\s*)?(\\w*)?(\\:)?(\\w*)?(\\s*)?(\\=)?(\\s*)?.([^<]*)?(\\s*)?.)?>')
+    rootTag = xml.match(regexRootTag)
+    
+    if(rootTag === null){
+        return [""]   
+    }
+    rootTag = rootTag[0]
     if(type === 'complex'){
-        //regex = new RegExp('<([a-z]{0,}:)?' + tag + '.*>.*</([a-z]{0,}:)?' + tag + '>')    
-        regex = new RegExp('<(\\w*:)?' + tag + '((\\s*)?\\w*(:\\w*)?(\\s*)?\\=(\\s*)?".*"(\\s*))?>.*<\/(\\w*:)?' + tag + '>')
-    }else{
-        //regex = new RegExp('<([a-z]{0,}:)?' + tag + '\s{0,}([aA-zZ]*\s{0,}=\s{0,}".*")?>[^<>]*<\/([a-z]{0,}:)?' + tag + '>')    
-        regex = new RegExp('<(\\w*:)?' + tag + '((\\s*)?\\w*(:\\w*)?(\\s*)?\\=(\\s*)?".*"(\\s*))?>[^<>]*</(\\w*:)?' + tag + '>')
+        cContent = '('
+        for(i=0; rootTag.length > i; i++){                                            
+            if(string.length != ''){
+                cContent+='|'        
+            }
+            char = rootTag.slice(i,i+1)
+            cContent += string + '[^'+char + ']'              
+            string += char            
+        }
+        cContent += ')*'
+        
+        regex = new RegExp('<(\\w*:)?' + tag + '((\\s*)?(\\w*)?(\\:)?(\\w*)?(\\s*)?(\\=)?(\\s*)?.([^<]*)?(\\s*))?>'+cContent+'<\/(\\w*:)?' + tag + '>','g')
+    }else{        
+        regex = new RegExp('<(\\w*:)?' + tag + '((\\s*)?\\w*(:\\w*)?(\\s*)?\\=(\\s*)?".*"(\\s*))?>[^<>]*</(\\w*:)?' + tag + '>','g')
     }
     
-    node = regex.exec(xml)
+    node = xml.match(regex)
     if(!node){
-        return ""
+        return [""]
     }
-    return node[0] 
+    return node
 }
-
 //RETORNA VALOR DE UMA TAG
 function getTagvalue(tagValue,tag){
     var tagIni
@@ -140,14 +148,13 @@ function validTagRegex(xml, replaces){
         return faultString 
     }
     
-    
     for(nReplaces = 0; nReplaces < replaces.length; nReplaces++){
         regex = new RegExp(replaces[nReplaces].value, 'g')
         if(replaces[nReplaces].tag){
             tag = replaces[nReplaces].tag
-            value = getNodeXml(xml, replaces[nReplaces].tag, replaces[nReplaces].type)
+            value = getNodeXml(xml, replaces[nReplaces].tag, replaces[nReplaces].type)[0]
             value = getTagvalue(value, replaces[nReplaces].tag)            
-            if(!regex.test(value)){
+            if(value.length > 0 && !regex.test(value)){
                 faultString += "ERROR: Element '" + tag + "': [facet 'pattern'] The value '" + value + "' is not accepted by the pattern '"+ regex.source + "'.\n"
                  
             }
@@ -194,12 +201,38 @@ function setAttributeValue(xml, attribute, newValue ){
 
 function getAttributeValue(xml, attribute){
     var regex = new RegExp(attribute + '(\\s)?=(\\s)?"[^>\\s]*','g')
-    attribute = regex.exec(xml)
+    var attributevalue = [""]
+    attribute = xml.match(regex)
     if(attribute){
         attributevalue = attribute[0]
         attributevalue = attributevalue.replace( /.*=(\\s)?"/,'')
         attributevalue = attributevalue.replace(/"/,'')     
         return attributevalue
     }
-    return ""
+    return attributevalue
+}
+
+
+function getComplexRegex(xml, tag){
+    var regex
+    var string = ''
+    regexRootTag  = new RegExp('<(\\w*:)?' + tag + '((\\s*)?(\\w*)?(:)?(\\w*)?(\\s*)?(\\=)?(\\s*)?(\"[^<]*\")?(\\s*))?>')
+    rootTag = xml.match(regexRootTag)[0]
+    
+    cContent = '('
+    for(i=0; rootTag.length > i; i++){                                            
+        if(string.length != ''){
+            cContent+='|'        
+            //cContent+='|'        
+        }
+        char = rootTag.slice(i,i+1)
+        cContent += string + '[^'+char + ']'              
+        string += char            
+    }
+    cContent += ')*'
+    
+    //regex = '<(\\w*:)?' + tag + '((\\s*)?(\\w*)?(:)?(\\w*)?(\\s*)?(\\=)?(\\s*)?("[^<]*")?(\\s*))?>'+cContent+'</(\\w*:)?' + tag + '>'
+    //regex = new RegExp('<(\\w*:)?' + tag + '((\\s*)?(\\w*)?(:)?(\\w*)?(\\s*)?(\\=)?(\\s*)?(\"[^<]*\")?(\\s*))?>'+cContent+'<\/(\\w*:)?' + tag + '>','g')
+
+    return cContent
 }
