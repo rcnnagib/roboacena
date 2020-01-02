@@ -186,7 +186,7 @@ function getSoapFault(code, faultString){
 	return soap
 }
 
-module.exports = {formatXML, replaceXML,  getNodeXml, getTagvalue, setAttributeValue, getAttributeValue, validTagRegex, getSoapFault}
+module.exports = {formatXML, replaceXML,  getNodeXml, getTagvalue, setAttributeValue, getAttributeValue, validTagRegex, getSoapFault, applyRegexScapes}
 
 
 //APLICA O REPLACE DE UMA TAG NO XML
@@ -235,4 +235,23 @@ function getComplexRegex(xml, tag){
     //regex = new RegExp('<(\\w*:)?' + tag + '((\\s*)?(\\w*)?(:)?(\\w*)?(\\s*)?(\\=)?(\\s*)?(\"[^<]*\")?(\\s*))?>'+cContent+'<\/(\\w*:)?' + tag + '>','g')
 
     return cContent
+}
+
+
+function applyRegexScapes(content){
+    content = content.replace(/\?/g,'\\?')
+	content = content.replace(/\*/g,'\\*')
+	content = content.replace(/\+/g,'\\+')
+	content = content.replace(/\-/g,'\\-')
+	content = content.replace(/\^/g,'\\^')
+	content = content.replace(/\$/g,'\\$')
+	content = content.replace(/\|/g,'\\|')
+	content = content.replace(/\[/g,'\\[')
+	content = content.replace(/\]/g,'\\]')
+	content = content.replace(/\{/g,'\\{')
+	content = content.replace(/\}/g,'\\}')
+	content = content.replace(/\(/g,'\\(')
+    content = content.replace(/\)/g,'\\)')
+
+    return content
 }

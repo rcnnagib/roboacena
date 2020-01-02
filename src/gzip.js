@@ -1,8 +1,19 @@
+/*Client = require("rpc-client");
+//Client = require("jsonrpc-node").Client
 
-var xml = '.*+-^$|[]{}()\\'
-var string = '\\.\\*\\+\\-\\^\\$\\|\\[\\]\\{\\}\\(\\)'
-var regex = new RegExp(string)
-xml.match(xml)
+client = new Client({host:"localhost",port:"5060", protocol:"TCP",envserver:"sped"});
+
+client.call("TSSprocmanager", ["sped"], function(err, result){
+    console.log("esse foi o resultado: " + result+ err)
+})
+
+*/
+
+
+var xml = 'renato-renato'
+var string = 'renato'
+var regex = new RegExp('renato','g')
+xml.match(regex)
 
 
 

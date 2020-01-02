@@ -15,21 +15,8 @@ async function registerTestCase(req, res){
 	
 	req.request =  base64decode(req.request)
 	req.request = xmlFunctions.formatXML(req.request)	
-	req.request = req.request.replace(/\?/g,'\\?')
-	req.request = req.request.replace(/\*/g,'\\*')
-	req.request = req.request.replace(/\+/g,'\\+')
-	req.request = req.request.replace(/\-/g,'\\-')
-	req.request = req.request.replace(/\^/g,'\\^')
-	req.request = req.request.replace(/\$/g,'\\$')
-	req.request = req.request.replace(/\|/g,'\\|')
-	req.request = req.request.replace(/\[/g,'\\[')
-	req.request = req.request.replace(/\]/g,'\\]')
-	req.request = req.request.replace(/\{/g,'\\{')
-	req.request = req.request.replace(/\}/g,'\\}')
-	req.request = req.request.replace(/\(/g,'\\(')
-	req.request = req.request.replace(/\)/g,'\\)')	
+	req.request = xmlFunctions.applyRegexScapes(req.request)			
 	req.request =  base64encode(await messageRequest(req.model, req.service, req.request))
-
 	result = await db.collection('testcases').replaceOne({testcase:testcase, service: req.service}, req, {upsert:true})
 	
 	if(result.upsertedId){
@@ -58,14 +45,14 @@ async function procTestCase(req, res){
 	}
 
 	//verifica se existe regex para a requisição
-	testcase = await getTestCase(req.headers.testcaseid, req.headers.model, req.headers.service, req.body, requestReplaces,rule, req.headers.testcaseId)
+	testcase = await getTestCase(req.headers.testcaseid, req.headers.model, req.headers.service, req.body, requestReplaces,rule, req.headers.validrequest)
 	if(testcase.regexError){									
 		console.log("code: "+ testcase.regexError.code + "\nError:" + testcase.regexError.error + "\ntestcase:" + req.headers.testcase)
 		res.end(xmlFunctions.getSoapFault(testcase.regexError.code, testcase.regexError.error))
 		return		
 	}
 	
-	if(req.headers.testcaseId && req.headers.testcaseId.endsWith("?")){
+	if(!req.headers.validrequest){
 		response = base64decode(testcase.response)
 	}
 	else if(rule && rule.request && rule.request.mode === 'async'){				
@@ -131,7 +118,7 @@ async function procTestCase(req, res){
 module.exports = {registerTestCase, procTestCase}
 
 //RETORNA CASO DE TESTE 
-async function getTestCase(testcaseId, model, service, request, replaces,rule){
+async function getTestCase(testcaseId, model, service, request, replaces,rule, validRequest){
 	var retTestcase = {testcase: null, regexError: {code: "404", error: "Testcase not found"} }
 	var testcase
 	var regex	
@@ -142,7 +129,7 @@ async function getTestCase(testcaseId, model, service, request, replaces,rule){
 		if(!testcase || testcase.length === 0){					
 			return retTestcase
 		}	
-		if(!testcaseId.endsWith("?")){
+		if(validRequest){
 			regex = new RegExp(testcase[0].request,'g')
 			if( !regex.exec(request)){
 				console.log('caso de teste com falha' )	
@@ -288,7 +275,7 @@ async function fillDocResp(replaces, request, retRequest){
 					}else{
 						tagToReplace  = xmlFunctions.getNodeXml(item, tag, type)[0]
 						newValue = xmlFunctions.getTagvalue(tagToReplace, tag)
-					}
+					}    
 					
 				}
 				field.push({tag: tag, value: newValue } )
