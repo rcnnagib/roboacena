@@ -1,9 +1,13 @@
-//CADASTRO DE REGRAS DE  E REPLACES PARA OS CASOS DE TESTES
 const functions = require('/roboacena/src/functions.js')
-async function createRules(model, rule, req, res){
+/**
+ * CADASTRO DE REGRAS DE  E REPLACES PARA OS CASOS DE TESTES
+ * @param {*} req 
+ * @param {*} res 
+ */
+async function createRules(req, res){
 	var result
 	db = await functions.connectMongoDB(URL)
-	result = await db.collection('rules').replaceOne( {model: model, rule: rule}, req, {upsert:true} )
+	result = await db.collection('rules').replaceOne( {model: req.model, service: req.service}, req, {upsert:true} )
 	
 	if(result.upsertedId){
 		res.end( "Regra Registrado com sucesso") 	
@@ -12,13 +16,17 @@ async function createRules(model, rule, req, res){
 	}
 }
 
-//RETORNA REGRAS DO CASO DE TESTE
+/**
+ * RETORNA REGRAS DO CASO DE TESTE
+ * @param {*} model 
+ * @param {*} service 
+ */
 async function getRules(model, service){
 	var rule
 	db = await functions.connectMongoDB(URL)
-	rule = await db.collection('rules').find( {model: model, services: { $elemMatch:{ service: service} } }, {'services.$':1} ).toArray()
-	if(rule && rule.length > 0){
-		return rule[0].services[0]
+	rule = await db.collection('rules').findOne( {model: model, service: service} )
+	if(rule){
+		return rule
 	}
 }
 

@@ -1,5 +1,8 @@
 
-//FORMATA XML
+/**
+ * FORMATA XML
+ * @param {*xml para a formatacao} request 
+ */
 function formatXML(request){
     request = request.replace(/&lt;/g,'<')
     request = request.replace(/&gt;/g,'>')
@@ -9,7 +12,12 @@ function formatXML(request){
     return request
 }
 
-//APLICA REPLACES EM UM XML
+/**
+ * APLICA REPLACES EM UM XML
+ * @param {*xml da requisicao} xml 
+ * @param {*array de replaces} replaces 
+ * @param {*xml do retorno da requisicao} xmlRequest 
+ */
 async function replaceXML(xml, replaces, xmlRequest){
     var functions = require('/roboacena/src/functions.js')    
     var newValue    
@@ -43,7 +51,13 @@ async function replaceXML(xml, replaces, xmlRequest){
     return xml
 }
 
-//APLICA O REPLACE DE UMA TAG NO XML
+/**
+ * APLICA O REPLACE DE UMA TAG NO XML
+ * @param {*xml que contem a tag a ser substituida} xml 
+ * @param {*tag a ser substituida} tag 
+ * @param {* valor para substituição na tag} newValue 
+ * @param {*tipo da tag: simples ou complexa} type 
+ */
 function setNodeXml(xml, tag, newValue, type ){
     var node
     var tagIni
@@ -66,6 +80,12 @@ function setNodeXml(xml, tag, newValue, type ){
     return xml.replace(node, newTag )
 }
 
+/**
+ * RETORNA UM NO DE UM XML
+ * @param {* xml para a busca do no} xml 
+ * @param {*no a ser procurado} tag 
+ * @param {*tipo do no: simples ou complexo} type 
+ */
 function getNodeXml(xml, tag, type){
     var node
     var regex
@@ -101,7 +121,11 @@ function getNodeXml(xml, tag, type){
     }
     return node
 }
-//RETORNA VALOR DE UMA TAG
+/**
+ * RETORNA VALOR DE UMA TAG
+ * @param {*} tagValue 
+ * @param {*} tag 
+ */
 function getTagvalue(tagValue,tag){
     var tagIni
     var tagFin
@@ -155,8 +179,7 @@ function validTagRegex(xml, replaces){
             value = getNodeXml(xml, replaces[nReplaces].tag, replaces[nReplaces].type)[0]
             value = getTagvalue(value, replaces[nReplaces].tag)            
             if(value.length > 0 && !regex.test(value)){
-                faultString += "ERROR: Element '" + tag + "': [facet 'pattern'] The value '" + value + "' is not accepted by the pattern '"+ regex.source + "'.\n"
-                 
+                faultString += "ERROR: Element '" + tag + "': [facet 'pattern'] The value '" + value + "' is not accepted by the pattern '"+ regex.source + "'.\n"                 
             }
         }else if(replaces[nReplaces].attribute){
             attribute = replaces[nReplaces].attribute            
@@ -169,7 +192,11 @@ function validTagRegex(xml, replaces){
     return faultString 
 }
 
-//MENSAGEM DE SOAP FAULT
+/**
+ * MENSAGEM DE SOAP FAULT
+ * @param {*} code 
+ * @param {*} faultString 
+ */
 function getSoapFault(code, faultString){
 	soap ='<SOAP-ENV:Envelope'
 	soap +=' xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"'
@@ -187,9 +214,12 @@ function getSoapFault(code, faultString){
 }
 
 module.exports = {formatXML, replaceXML,  getNodeXml, getTagvalue, setAttributeValue, getAttributeValue, validTagRegex, getSoapFault, applyRegexScapes}
-
-
-//APLICA O REPLACE DE UMA TAG NO XML
+/**
+ * APLICA O REPLACE DE UMA TAG NO XML
+ * @param {*} xml 
+ * @param {*} attribute 
+ * @param {*} newValue 
+ */
 function setAttributeValue(xml, attribute, newValue ){
     
     var attributevalue =  getAttributeValue(xml, attribute)            
@@ -198,7 +228,11 @@ function setAttributeValue(xml, attribute, newValue ){
     }
     return xml
 }
-
+/**
+ * RETORNA VALOR DE UM ATRIBUTO DE UMA TAG
+ * @param {* xml} xml 
+ * @param {* atributo} attribute 
+ */
 function getAttributeValue(xml, attribute){
     var regex = new RegExp(attribute + '(\\s)?=(\\s)?"[^>\\s]*','g')
     var attributevalue = [""]
@@ -211,8 +245,11 @@ function getAttributeValue(xml, attribute){
     }
     return attributevalue
 }
-
-
+/**
+ * 
+ * @param {*xml com o tipo complexo} xml 
+ * @param {*} tag 
+ */
 function getComplexRegex(xml, tag){
     var regex
     var string = ''
@@ -223,21 +260,20 @@ function getComplexRegex(xml, tag){
     for(i=0; rootTag.length > i; i++){                                            
         if(string.length != ''){
             cContent+='|'        
-            //cContent+='|'        
         }
         char = rootTag.slice(i,i+1)
         cContent += string + '[^'+char + ']'              
         string += char            
     }
     cContent += ')*'
-    
-    //regex = '<(\\w*:)?' + tag + '((\\s*)?(\\w*)?(:)?(\\w*)?(\\s*)?(\\=)?(\\s*)?("[^<]*")?(\\s*))?>'+cContent+'</(\\w*:)?' + tag + '>'
-    //regex = new RegExp('<(\\w*:)?' + tag + '((\\s*)?(\\w*)?(:)?(\\w*)?(\\s*)?(\\=)?(\\s*)?(\"[^<]*\")?(\\s*))?>'+cContent+'<\/(\\w*:)?' + tag + '>','g')
 
     return cContent
 }
 
-
+/**
+ * APLICA SCAPES PARA CARACTERES DE REGEX
+ * @param {*xml para a aplicação dos scapes} content 
+ */
 function applyRegexScapes(content){
     content = content.replace(/\?/g,'\\?')
 	content = content.replace(/\*/g,'\\*')
@@ -252,6 +288,5 @@ function applyRegexScapes(content){
 	content = content.replace(/\}/g,'\\}')
 	content = content.replace(/\(/g,'\\(')
     content = content.replace(/\)/g,'\\)')
-
     return content
 }

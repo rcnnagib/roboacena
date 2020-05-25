@@ -30,7 +30,7 @@ var cluster = require('cluster');
 	var port = 8000;
 	var porthttp = 8083;
 	var rules = require('/roboacena/src/rules.js')
-	var testcase = require('/roboacena/src/testcase.js')
+	var mockProcess  = require('/roboacena/src/mockProcess.js')
 	
 	var server = https.createServer(options, app).listen(port, function(){
 		console.log("Express server https listening on port " + port);
@@ -40,25 +40,26 @@ var cluster = require('cluster');
 		console.log("Express server https listening on port " + port);
 	});
 */
+	
+	//INCLUSAO DOS CASOS DE TESTES
+	app.post('/automacao/testcases/',bodyParser.json({limit: '10mb', extended: true}) ,function(req, res, next){		
+		mockProcess.MockTemplates(req.body, res)
+	})
+
 	//VALIDACAO E PROCESSAMENTO DE CASOS DE TESTES
 	app.post(/proc-request/,bodyParser.text({type:'*/*',limit: '10mb', extended: true}),function (req, res) {
 		console.log("recebendo requisicao:\n servico:" + req.headers.service + "\nmodelo: " + req.headers.model)	
-		testcase.procTestCase(req, res)
-	})
-
-	//INCLUSAO DOS CASOS DE TESTES
-	app.post('/automacao/testcases/',bodyParser.json({limit: '10mb', extended: true}) ,function(req, res, next){		
-		testcase.registerTestCase(req.body, res)
+		mockProcess.getMockResponse(req, res)
 	})
 
 	//CADASTRO DE REGRAS DE SCAPES E REPLACES
 	app.post('/automacao/templates/rules/',bodyParser.json({limit: '10mb', extended: true}) ,function(req, res, next){		
-		rules.createRules(req.body.model, req.body.rule, req.body, res)			
+		rules.createRules(req.body, res)			
 	})
 
 	//CADASTRO DE REGRAS DE SCAPES E REPLACES
 	app.get('/automacao/templates/rules/',bodyParser.json({limit: '10mb', extended: true}) ,function(req, res, next){		
-		rules.createRules(req.body.model, req.body.rule, req.body, res)			
+		rules.createRules(req.body, res)			
 	})
 
 	//RETORNA ARQUIVOS
