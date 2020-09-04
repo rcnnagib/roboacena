@@ -14,7 +14,7 @@
     "express-xml-bodyparser": "^0.3.0",
     "jsonwebtoken": "^8.2.1",
     "macro": "0.0.2",
-    "mongodb": "^2.2.33",
+    "mongodb": "^3.1.13",
     "node-gzip": "^1.1.2",
     "node-json-rpc": "0.0.1",
     "node-rsa": "^1.0.5",
